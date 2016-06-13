@@ -40,7 +40,6 @@ public class AccountInfoTask extends AsyncTask<Void, Void, FullAccount> {
 
         try {
             return mDbxClient.users().getCurrentAccount();
-
         } catch (DbxException e) {
             mException = e;
         }

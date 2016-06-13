@@ -9,6 +9,10 @@
             name="account"
             type="meta.simplifi.dropboxuploader.FullAccountViewModel"/>
 
+        <variable
+            name="loggedIn"
+            type="android.databinding.ObservableBoolean"/>
+
     </data>
 
     <LinearLayout
@@ -33,20 +37,46 @@
             android:src="@{account.photoUrl}"
             tools:src="@android:drawable/sym_def_app_icon"/>
 
-        <TextView
-            android:id="@+id/name_textView"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@{account.name}"
-            android:textAppearance="@style/TextAppearance.AppCompat.Body1"
-            tools:text="Name"/>
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/email_textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@{account.email}"
-            tools:text="Email address"/>
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/name_textView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@{account.name}"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                    tools:text="Name"/>
+
+                <TextView
+                    android:id="@+id/email_textView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@{account.email}"
+                    tools:text="Email address"/>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/log_in_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                android:text="@{loggedIn.get() ? @string/log_out : @string/log_in}"
+                tools:text="Log out"/>
+
+        </LinearLayout>
 
     </LinearLayout>
 </layout>

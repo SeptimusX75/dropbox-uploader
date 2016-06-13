@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
+import android.databinding.ObservableBoolean;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -52,6 +53,9 @@ public class MainActivity extends AppCompatActivity
     private String mToken;
     private ActivityMainBinding mBinding;
     private NavHeaderMainBinding mHeaderBinding;
+    private FullAccountViewModel mAccountVm;
+    private SharedPreferences mPreferences;
+    private ObservableBoolean mLoggedIn = new ObservableBoolean();
     private View.OnClickListener mFabClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -68,17 +72,22 @@ public class MainActivity extends AppCompatActivity
             }
         }
     };
-    private FullAccountViewModel mAccountVm;
 
     @Override
     protected void onResume() {
         super.onResume();
-        SharedPreferences preferences = getSharedPreferences(AUTH_TOKEN, MODE_PRIVATE);
-        mToken = preferences.getString(AUTH_TOKEN, null);
+        mPreferences = getSharedPreferences(AUTH_TOKEN, MODE_PRIVATE);
+        verifyAuth();
+        mLoggedIn.set(hasToken());
+    }
+
+    private void verifyAuth() {
+        mToken = mPreferences.getString(AUTH_TOKEN, null);
+
         if (mToken == null) {
             mToken = Auth.getOAuth2Token();
             if (mToken != null) {
-                preferences.edit().putString(AUTH_TOKEN, mToken).apply();
+                mPreferences.edit().putString(AUTH_TOKEN, mToken).apply();
                 DropboxClientFactory.setDbxClient(mToken);
                 getAccountInfo();
             }
@@ -109,6 +118,23 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         mHeaderBinding = DataBindingUtil.bind(navigationView.getHeaderView(0));
+        mHeaderBinding.setLoggedIn(mLoggedIn);
+        mHeaderBinding.logInButton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (hasToken()) {
+                            mToken = null;
+                            mPreferences.edit().putString(AUTH_TOKEN, mToken).apply();
+                            mHeaderBinding.setAccount(null);
+                            mLoggedIn.set(hasToken());
+                            Toast.makeText(MainActivity.this, "Successfully logged out", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Auth.startOAuth2Authentication(MainActivity.this, getString(R.string.app_key));
+                        }
+                    }
+                }
+        );
     }
 
     private boolean hasToken() {
@@ -226,18 +252,9 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
+        switch (id) {
+            case R.id.nav_uploads:
+                break;
         }
 
         mBinding.drawerLayout.closeDrawer(GravityCompat.START);
@@ -277,9 +294,13 @@ public class MainActivity extends AppCompatActivity
             public void onComplete(FullAccount result) {
                 if (mAccountVm == null) {
                     mAccountVm = new FullAccountViewModel(result);
-                    mHeaderBinding.setAccount(mAccountVm);
                 } else {
                     mAccountVm.setAccount(result);
+                }
+
+                // Only need to set if we removed the reference
+                if (mHeaderBinding.getAccount() == null) {
+                    mHeaderBinding.setAccount(mAccountVm);
                 }
             }
 

@@ -13,4 +13,6 @@
     <string name="upload_progress">Uploading</string>
     <string name="error_message">An error has occurred</string>
     <string name="upload_failed">Failed to upload file.</string>
+    <string name="log_in">Log in</string>
+    <string name="log_out">Log out</string>
 </resources>

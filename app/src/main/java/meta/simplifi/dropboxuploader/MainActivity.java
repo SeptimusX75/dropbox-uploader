@@ -29,10 +29,12 @@ import android.widget.Toast;
 
 import com.dropbox.core.android.Auth;
 import com.dropbox.core.v2.files.FileMetadata;
+import com.dropbox.core.v2.users.FullAccount;
 
 import java.text.DateFormat;
 
 import meta.simplifi.dropboxuploader.databinding.ActivityMainBinding;
+import meta.simplifi.dropboxuploader.databinding.NavHeaderMainBinding;
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.OnNeverAskAgain;
 import permissions.dispatcher.OnPermissionDenied;
@@ -46,8 +48,27 @@ public class MainActivity extends AppCompatActivity
 
     public static final String AUTH_TOKEN = "auth-token";
     public static final int SELECT_PICTURE = 0;
+    public static final String SCHEME_PACKAGE = "package";
     private String mToken;
     private ActivityMainBinding mBinding;
+    private NavHeaderMainBinding mHeaderBinding;
+    private View.OnClickListener mFabClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            if (!hasToken()) {
+                Snackbar.make(view, R.string.dropbox_log_in, Snackbar.LENGTH_LONG)
+                        .setAction(android.R.string.ok, new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                Auth.startOAuth2Authentication(MainActivity.this, getString(R.string.app_key));
+                            }
+                        }).show();
+            } else {
+                MainActivityPermissionsDispatcher.openGalleryWithCheck(MainActivity.this);
+            }
+        }
+    };
+    private FullAccountViewModel mAccountVm;
 
     @Override
     protected void onResume() {
@@ -58,7 +79,12 @@ public class MainActivity extends AppCompatActivity
             mToken = Auth.getOAuth2Token();
             if (mToken != null) {
                 preferences.edit().putString(AUTH_TOKEN, mToken).apply();
+                DropboxClientFactory.setDbxClient(mToken);
+                getAccountInfo();
             }
+        } else {
+            DropboxClientFactory.setDbxClient(mToken);
+            getAccountInfo();
         }
     }
 
@@ -70,31 +96,19 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = mBinding.appBarMain.fab;
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (!hasToken()) {
-                    Snackbar.make(view, R.string.dropbox_log_in, Snackbar.LENGTH_LONG)
-                            .setAction(android.R.string.ok, new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {
-                                    Auth.startOAuth2Authentication(MainActivity.this, getString(R.string.app_key));
-                                }
-                            }).show();
-                } else {
-                    MainActivityPermissionsDispatcher.openGalleryWithCheck(MainActivity.this);
-                }
-            }
-        });
+        fab.setOnClickListener(mFabClickListener);
 
         DrawerLayout drawer = mBinding.drawerLayout;
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close
+        );
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
         NavigationView navigationView = mBinding.navView;
         navigationView.setNavigationItemSelectedListener(this);
+
+        mHeaderBinding = DataBindingUtil.bind(navigationView.getHeaderView(0));
     }
 
     private boolean hasToken() {
@@ -107,7 +121,10 @@ public class MainActivity extends AppCompatActivity
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent, getString(R.string.pictures_choose)), SELECT_PICTURE);
+        startActivityForResult(
+                Intent.createChooser(intent, getString(R.string.pictures_choose)),
+                SELECT_PICTURE
+        );
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
@@ -158,7 +175,11 @@ public class MainActivity extends AppCompatActivity
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Uri uri = Uri.fromParts("package", getApplicationContext().getPackageName(), null);
+                        Uri uri = Uri.fromParts(
+                                SCHEME_PACKAGE,
+                                getApplicationContext().getPackageName(),
+                                null
+                        );
                         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri);
                         startActivity(intent);
                         snackbar.dismiss();
@@ -219,8 +240,7 @@ public class MainActivity extends AppCompatActivity
 
         }
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
+        mBinding.drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
 
@@ -236,7 +256,6 @@ public class MainActivity extends AppCompatActivity
 
         switch (requestCode) {
             case SELECT_PICTURE:
-                DropboxClientFactory.setDbxClient(mToken);
                 uploadPicture(data.getData());
                 break;
             default:
@@ -244,22 +263,45 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    private void uploadPicture(Uri fileUri) {
+    private ProgressDialog createUploadProgressDialog() {
         final ProgressDialog dialog = new ProgressDialog(this);
         dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         dialog.setCancelable(false);
-        dialog.setMessage("Uploading");
+        dialog.setMessage(getString(R.string.upload_progress));
+        return dialog;
+    }
+
+    private void getAccountInfo() {
+        new AccountInfoTask(DropboxClientFactory.getClient(), new AccountInfoTask.Callback() {
+            @Override
+            public void onComplete(FullAccount result) {
+                if (mAccountVm == null) {
+                    mAccountVm = new FullAccountViewModel(result);
+                    mHeaderBinding.setAccount(mAccountVm);
+                } else {
+                    mAccountVm.setAccount(result);
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+
+            }
+        }).execute();
+    }
+
+    private void uploadPicture(Uri fileUri) {
+        final ProgressDialog dialog = createUploadProgressDialog();
         dialog.show();
 
-        new UploadTask(this, DropboxClientFactory.getDbxClient(), new UploadTask.UploadCallback() {
+        new UploadTask(this, DropboxClientFactory.getClient(), new UploadTask.UploadCallback() {
             @Override
             public void onSuccess(FileMetadata metadata) {
                 dialog.dismiss();
 
                 String message = metadata.getName() + " size " + metadata.getSize() + " modified " +
                         DateFormat.getDateTimeInstance().format(metadata.getClientModified());
-                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT)
-                        .show();
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
 
                 // Reload the folder
             }
@@ -268,11 +310,8 @@ public class MainActivity extends AppCompatActivity
             public void onFailure(Exception e) {
                 dialog.dismiss();
 
-                Log.e(MainActivity.this.getClass().getSimpleName(), "Failed to upload file.", e);
-                Toast.makeText(MainActivity.this,
-                        "An error has occurred",
-                        Toast.LENGTH_SHORT)
-                        .show();
+                Log.e(MainActivity.this.getClass().getSimpleName(), getString(R.string.upload_failed), e);
+                Toast.makeText(MainActivity.this, R.string.error_message, Toast.LENGTH_SHORT).show();
             }
         }).execute(fileUri.toString(), "");
     }

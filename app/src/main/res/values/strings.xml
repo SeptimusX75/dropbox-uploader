@@ -10,4 +10,7 @@
     <string name="pictures_no_access">Couldn\'t access pictures</string>
     <string name="pictures_choose">Choose a picture to upload</string>
     <string name="dropbox_log_in">Log in to Dropbox to upload pictures</string>
+    <string name="upload_progress">Uploading</string>
+    <string name="error_message">An error has occurred</string>
+    <string name="upload_failed">Failed to upload file.</string>
 </resources>

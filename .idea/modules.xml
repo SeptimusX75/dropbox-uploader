@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/DropboxUploader.iml" filepath="$PROJECT_DIR$/DropboxUploader.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Dropbox.iml" filepath="$PROJECT_DIR$/Dropbox.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

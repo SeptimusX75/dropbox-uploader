@@ -14,4 +14,9 @@ public class BindingAdapters {
     public static void setSrc(ImageView imageView, String src) {
         Picasso.with(imageView.getContext()).load(src).fit().centerInside().into(imageView);
     }
+
+    @BindingAdapter("android:src")
+    public static void setSrc(ImageView imageView, int src) {
+        Picasso.with(imageView.getContext()).load(src).fit().centerInside().into(imageView);
+    }
 }

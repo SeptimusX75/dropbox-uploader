@@ -7,7 +7,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
-import android.databinding.ObservableBoolean;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -55,7 +54,7 @@ public class MainActivity extends AppCompatActivity
     private NavHeaderMainBinding mHeaderBinding;
     private FullAccountViewModel mAccountVm;
     private SharedPreferences mPreferences;
-    private ObservableBoolean mLoggedIn = new ObservableBoolean();
+    private LogInViewModel mLogIn = new LogInViewModel();
     private View.OnClickListener mFabClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -78,7 +77,7 @@ public class MainActivity extends AppCompatActivity
         super.onResume();
         mPreferences = getSharedPreferences(AUTH_TOKEN, MODE_PRIVATE);
         verifyAuth();
-        mLoggedIn.set(hasToken());
+        mLogIn.setLoggedIn(hasToken());
     }
 
     private void verifyAuth() {
@@ -118,7 +117,7 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         mHeaderBinding = DataBindingUtil.bind(navigationView.getHeaderView(0));
-        mHeaderBinding.setLoggedIn(mLoggedIn);
+        mHeaderBinding.setLogIn(mLogIn);
         mHeaderBinding.logInButton.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
@@ -127,7 +126,7 @@ public class MainActivity extends AppCompatActivity
                             mToken = null;
                             mPreferences.edit().putString(AUTH_TOKEN, mToken).apply();
                             mHeaderBinding.setAccount(null);
-                            mLoggedIn.set(hasToken());
+                            mLogIn.setLoggedIn(hasToken());
                             Toast.makeText(MainActivity.this, "Successfully logged out", Toast.LENGTH_SHORT).show();
                         } else {
                             Auth.startOAuth2Authentication(MainActivity.this, getString(R.string.app_key));

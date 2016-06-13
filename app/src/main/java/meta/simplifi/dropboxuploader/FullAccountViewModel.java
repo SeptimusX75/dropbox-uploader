@@ -52,6 +52,6 @@ public class FullAccountViewModel extends BaseViewModel {
 
     @Override
     public int getVariableId() {
-        return 0;
+        return BR.account;
     }
 }

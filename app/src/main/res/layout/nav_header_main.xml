@@ -12,8 +12,8 @@
             type="meta.simplifi.dropboxuploader.FullAccountViewModel"/>
 
         <variable
-            name="loggedIn"
-            type="android.databinding.ObservableBoolean"/>
+            name="logIn"
+            type="meta.simplifi.dropboxuploader.LogInViewModel"/>
 
     </data>
 
@@ -79,7 +79,7 @@
                     android:clickable="true"
                     android:paddingLeft="4dp"
                     android:paddingRight="4dp"
-                    android:text="@{loggedIn.get() ? @string/log_out : @string/log_in}"
+                    android:text="@{logIn.logInButtonTextResId}"
                     tools:text="Log out"/>
 
             </LinearLayout>
@@ -92,7 +92,7 @@
             android:padding="16dp"
             android:src="@drawable/dropbox_white"
             android:tint="@android:color/white"
-            android:visibility="@{loggedIn.get() ? View.GONE : View.VISIBLE}"
+            android:visibility="@{logIn.dropboxLogoVisibility}"
             tools:visibility="gone"/>
 
     </FrameLayout>

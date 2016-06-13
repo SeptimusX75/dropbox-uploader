@@ -38,7 +38,11 @@ public class FullAccountViewModel extends BaseViewModel {
 
     @Bindable
     public String getPhotoUrl() {
-        return mAccount.getProfilePhotoUrl();
+        String url = mAccount.getProfilePhotoUrl();
+        if (url == null) {
+            return UriUtil.getPathToResource(android.R.drawable.sym_def_app_icon);
+        }
+        return url;
     }
 
     @Override

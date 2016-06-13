@@ -1,14 +1,17 @@
 package meta.simplifi.dropboxuploader;
 
 import android.annotation.TargetApi;
+import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.support.annotation.AnyRes;
 
 import java.io.File;
 
@@ -115,5 +118,14 @@ public class UriUtil {
 
     private static boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
+    }
+
+    public static String getPathToResource(@AnyRes int resId) {
+        Resources resources = App.getContext().getResources();
+        return ContentResolver.SCHEME_ANDROID_RESOURCE
+                + "://"
+                + resources.getResourcePackageName(resId)
+                + "/"
+                + resId;
     }
 }

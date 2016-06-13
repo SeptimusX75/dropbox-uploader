@@ -2,11 +2,14 @@ package meta.simplifi.dropboxuploader;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -14,17 +17,20 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.dropbox.core.android.Auth;
 
 import meta.simplifi.dropboxuploader.databinding.ActivityMainBinding;
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.OnNeverAskAgain;
+import permissions.dispatcher.OnPermissionDenied;
 import permissions.dispatcher.OnShowRationale;
 import permissions.dispatcher.PermissionRequest;
 import permissions.dispatcher.RuntimePermissions;
@@ -100,9 +106,14 @@ public class MainActivity extends AppCompatActivity
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @OnShowRationale(Manifest.permission.READ_EXTERNAL_STORAGE)
-    void onShowStorageRationale(PermissionRequest request) {
-        showPermissionSnackbar();
-        request.proceed();
+    void onShowStorageRationale(final PermissionRequest request) {
+        showRationaleDialog(request);
+    }
+
+    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+    @OnPermissionDenied(Manifest.permission.READ_EXTERNAL_STORAGE)
+    void onPermissionDenied() {
+        Toast.makeText(MainActivity.this, "Couldn't access pictures", Toast.LENGTH_SHORT).show();
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
@@ -111,18 +122,40 @@ public class MainActivity extends AppCompatActivity
         showPermissionSnackbar();
     }
 
+    private void showRationaleDialog(final PermissionRequest request) {
+        new AlertDialog.Builder(this)
+                .setMessage(R.string.storage_permission_rationale)
+                .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        request.proceed();
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        request.cancel();
+                    }
+                })
+                .show();
+    }
+
     private void showPermissionSnackbar() {
-        Snackbar.make(
+        final Snackbar snackbar = Snackbar.make(
                 mBinding.appBarMain.fab,
-                "We need storage permissions to upload pictures",
+                R.string.storage_permission_rationale,
                 Snackbar.LENGTH_INDEFINITE
-        ).setAction(
+        );
+
+        snackbar.setAction(
                 getString(android.R.string.ok),
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        MainActivityPermissionsDispatcher
-                                .openGalleryWithCheck(MainActivity.this);
+                        Uri uri = Uri.fromParts("package", getApplicationContext().getPackageName(), null);
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri);
+                        startActivity(intent);
+                        snackbar.dismiss();
                     }
                 }
         ).show();

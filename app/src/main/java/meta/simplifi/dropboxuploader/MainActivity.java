@@ -1,10 +1,11 @@
 package meta.simplifi.dropboxuploader;
 
+import android.content.SharedPreferences;
+import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.view.View;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -12,34 +13,67 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+
+import com.dropbox.core.android.Auth;
+
+import meta.simplifi.dropboxuploader.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    public static final String AUTH_TOKEN = "auth-token";
+    private SharedPreferences mPreferences;
+    private String mToken;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mPreferences = getSharedPreferences(AUTH_TOKEN, MODE_PRIVATE);
+        mToken = mPreferences.getString(AUTH_TOKEN, null);
+        if (mToken == null) {
+            mToken = Auth.getOAuth2Token();
+            if (mToken != null) {
+                mPreferences.edit().putString(AUTH_TOKEN, mToken).apply();
+            }
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        Toolbar toolbar = binding.appBarMain.toolbar;
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = binding.appBarMain.fab;
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                if (!hasToken()) {
+                    Snackbar.make(view, "You have to log in to upload pictures", Snackbar.LENGTH_LONG)
+                            .setAction("Go", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    Auth.startOAuth2Authentication(MainActivity.this, getString(R.string.app_key));
+                                }
+                            }).show();
+                }
             }
         });
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = binding.drawerLayout;
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = binding.navView;
         navigationView.setNavigationItemSelectedListener(this);
+    }
+
+    private boolean hasToken() {
+        return mToken != null;
     }
 
     @Override

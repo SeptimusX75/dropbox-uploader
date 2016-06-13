@@ -2,6 +2,7 @@ package meta.simplifi.dropboxuploader;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,12 +21,16 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
 import com.dropbox.core.android.Auth;
+import com.dropbox.core.v2.files.FileMetadata;
+
+import java.text.DateFormat;
 
 import meta.simplifi.dropboxuploader.databinding.ActivityMainBinding;
 import permissions.dispatcher.NeedsPermission;
@@ -40,6 +45,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     public static final String AUTH_TOKEN = "auth-token";
+    public static final int SELECT_PICTURE = 0;
     private String mToken;
     private ActivityMainBinding mBinding;
 
@@ -68,8 +74,8 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view) {
                 if (!hasToken()) {
-                    Snackbar.make(view, "Log in to Dropbox to upload pictures", Snackbar.LENGTH_LONG)
-                            .setAction("Go", new View.OnClickListener() {
+                    Snackbar.make(view, R.string.dropbox_log_in, Snackbar.LENGTH_LONG)
+                            .setAction(android.R.string.ok, new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
                                     Auth.startOAuth2Authentication(MainActivity.this, getString(R.string.app_key));
@@ -101,19 +107,19 @@ public class MainActivity extends AppCompatActivity
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent, "Choose a picture to upload"), 0);
+        startActivityForResult(Intent.createChooser(intent, getString(R.string.pictures_choose)), SELECT_PICTURE);
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @OnShowRationale(Manifest.permission.READ_EXTERNAL_STORAGE)
     void onShowStorageRationale(final PermissionRequest request) {
-        showRationaleDialog(request);
+        showPermissionRationaleDialog(request);
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @OnPermissionDenied(Manifest.permission.READ_EXTERNAL_STORAGE)
     void onPermissionDenied() {
-        Toast.makeText(MainActivity.this, "Couldn't access pictures", Toast.LENGTH_SHORT).show();
+        Toast.makeText(MainActivity.this, R.string.pictures_no_access, Toast.LENGTH_SHORT).show();
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
@@ -122,7 +128,7 @@ public class MainActivity extends AppCompatActivity
         showPermissionSnackbar();
     }
 
-    private void showRationaleDialog(final PermissionRequest request) {
+    private void showPermissionRationaleDialog(final PermissionRequest request) {
         new AlertDialog.Builder(this)
                 .setMessage(R.string.storage_permission_rationale)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -222,5 +228,52 @@ public class MainActivity extends AppCompatActivity
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         MainActivityPermissionsDispatcher.onRequestPermissionsResult(this, requestCode, grantResults);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if ((resultCode != RESULT_OK)) return;
+
+        switch (requestCode) {
+            case SELECT_PICTURE:
+                DropboxClientFactory.setDbxClient(mToken);
+                uploadPicture(data.getData());
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void uploadPicture(Uri fileUri) {
+        final ProgressDialog dialog = new ProgressDialog(this);
+        dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        dialog.setCancelable(false);
+        dialog.setMessage("Uploading");
+        dialog.show();
+
+        new UploadTask(this, DropboxClientFactory.getDbxClient(), new UploadTask.UploadCallback() {
+            @Override
+            public void onSuccess(FileMetadata metadata) {
+                dialog.dismiss();
+
+                String message = metadata.getName() + " size " + metadata.getSize() + " modified " +
+                        DateFormat.getDateTimeInstance().format(metadata.getClientModified());
+                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT)
+                        .show();
+
+                // Reload the folder
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                dialog.dismiss();
+
+                Log.e(MainActivity.this.getClass().getSimpleName(), "Failed to upload file.", e);
+                Toast.makeText(MainActivity.this,
+                        "An error has occurred",
+                        Toast.LENGTH_SHORT)
+                        .show();
+            }
+        }).execute(fileUri.toString(), "");
     }
 }

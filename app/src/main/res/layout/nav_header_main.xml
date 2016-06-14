@@ -90,7 +90,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:padding="16dp"
-            android:src="@drawable/dropbox_white"
+            android:src="@drawable/logo_dropbox"
             android:tint="@android:color/white"
             android:visibility="@{login.dropboxLogoVisibility}"
             tools:visibility="gone"/>

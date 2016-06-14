@@ -16,4 +16,5 @@
     <string name="log_in">Log in</string>
     <string name="log_out">Log out</string>
     <string name="title_activity_uploaded_files">Uploaded Files</string>
+    <string name="menu_uploaded">Uploaded</string>
 </resources>

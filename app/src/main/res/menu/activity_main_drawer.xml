@@ -4,6 +4,6 @@
     <item
         android:id="@+id/nav_uploads"
         android:icon="@drawable/ic_menu_cloud_upload"
-        android:title="Uploads"/>
+        android:title="@string/menu_uploaded"/>
 
 </menu>

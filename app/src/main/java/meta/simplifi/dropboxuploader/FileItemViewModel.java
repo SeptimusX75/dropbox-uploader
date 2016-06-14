@@ -38,7 +38,10 @@ public class FileItemViewModel extends BaseViewModel {
         MimeTypeMap typeMap = MimeTypeMap.getSingleton();
         String extension = mFileMetadata.getName().substring(mFileMetadata.getName().indexOf(".") + 1);
         String type = typeMap.getMimeTypeFromExtension(extension);
-        return FileThumbnailRequestHandler.buildPicassoUri(mFileMetadata);
+
+        if (type != null && type.startsWith("image/"))
+            return FileThumbnailRequestHandler.buildPicassoUri(mFileMetadata);
+        else return Uri.parse("");
     }
 
     @Override

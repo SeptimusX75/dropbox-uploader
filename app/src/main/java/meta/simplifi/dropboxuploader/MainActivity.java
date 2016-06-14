@@ -7,6 +7,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.databinding.DataBindingUtil;
+import android.databinding.Observable;
+import android.databinding.ObservableField;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,10 +30,9 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.dropbox.core.android.Auth;
+import com.dropbox.core.v2.DbxClientV2;
 import com.dropbox.core.v2.files.FileMetadata;
 import com.dropbox.core.v2.users.FullAccount;
-
-import java.text.DateFormat;
 
 import meta.simplifi.dropboxuploader.databinding.ActivityMainBinding;
 import meta.simplifi.dropboxuploader.databinding.NavHeaderMainBinding;
@@ -49,98 +50,121 @@ public class MainActivity extends AppCompatActivity
     public static final String AUTH_TOKEN = "auth-token";
     public static final int SELECT_PICTURE = 0;
     public static final String SCHEME_PACKAGE = "package";
-    private String mToken;
+
     private ActivityMainBinding mBinding;
-    private NavHeaderMainBinding mHeaderBinding;
+    private NavHeaderMainBinding mNavHeaderBinding;
     private FullAccountViewModel mAccountVm;
+    private DbxClientV2 mDbxClient;
     private SharedPreferences mPreferences;
-    private LogInViewModel mLogIn = new LogInViewModel();
+
+    private ObservableField<String> mObservableToken = new ObservableField<>();
+    private LogInViewModel mLogInVm = new LogInViewModel();
+
+    //region Callbacks
     private View.OnClickListener mFabClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
             if (!hasToken()) {
-                Snackbar.make(view, R.string.dropbox_log_in, Snackbar.LENGTH_LONG)
-                        .setAction(android.R.string.ok, new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                Auth.startOAuth2Authentication(MainActivity.this, getString(R.string.app_key));
-                            }
-                        }).show();
+                showAuthSnackbar();
             } else {
                 MainActivityPermissionsDispatcher.openGalleryWithCheck(MainActivity.this);
             }
         }
     };
+    private Observable.OnPropertyChangedCallback mTokenCallback = new Observable.OnPropertyChangedCallback() {
+        @Override
+        public void onPropertyChanged(Observable observable, int i) {
+            if (hasToken()) {
+                DropboxClientFactory.setDbxClient(mObservableToken.get());
+                mDbxClient = DropboxClientFactory.getClient();
+
+                ImageLibClient.init(MainActivity.this, mDbxClient);
+                getAccountInfo();
+                mLogInVm.setLoggedIn(hasToken());
+            }
+        }
+    };
+    //endregion
 
     @Override
     protected void onResume() {
         super.onResume();
         mPreferences = getSharedPreferences(AUTH_TOKEN, MODE_PRIVATE);
         verifyAuth();
-        mLogIn.setLoggedIn(hasToken());
-
     }
 
     private void verifyAuth() {
-        mToken = mPreferences.getString(AUTH_TOKEN, null);
+        mObservableToken.set(mPreferences.getString(AUTH_TOKEN, null));
 
-        if (mToken == null) {
-            mToken = Auth.getOAuth2Token();
-            if (mToken != null) {
-                mPreferences.edit().putString(AUTH_TOKEN, mToken).apply();
-                DropboxClientFactory.setDbxClient(mToken);
-                getAccountInfo();
-                ImageLibClient.init(MainActivity.this, DropboxClientFactory.getClient());
+        if (mObservableToken.get() == null) {
+            mObservableToken.set(Auth.getOAuth2Token());
+            if (mObservableToken.get() != null) {
+                mPreferences.edit().putString(AUTH_TOKEN, mObservableToken.get()).apply();
             }
-        } else {
-            DropboxClientFactory.setDbxClient(mToken);
-            getAccountInfo();
-            ImageLibClient.init(MainActivity.this, DropboxClientFactory.getClient());
         }
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         mBinding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        mBinding.navView.setNavigationItemSelectedListener(this);
+
+        mNavHeaderBinding = DataBindingUtil.bind(mBinding.navView.getHeaderView(0));
+        // Listen for changes to token
+        mObservableToken.addOnPropertyChangedCallback(mTokenCallback);
+
+        configureUi();
+    }
+
+    private void configureUi() {
         Toolbar toolbar = mBinding.appBarMain.toolbar;
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = mBinding.appBarMain.fab;
         fab.setOnClickListener(mFabClickListener);
 
-        DrawerLayout drawer = mBinding.drawerLayout;
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close
+        // Listen for changes in the app drawer
+        ActionBarDrawerToggle drawerToggle = new ActionBarDrawerToggle(
+                this,
+                mBinding.drawerLayout,
+                toolbar,
+                R.string.navigation_drawer_open,
+                R.string.navigation_drawer_close
         );
-        drawer.setDrawerListener(toggle);
-        toggle.syncState();
+        mBinding.drawerLayout.addDrawerListener(drawerToggle);
+        drawerToggle.syncState();
 
-        NavigationView navigationView = mBinding.navView;
-        navigationView.setNavigationItemSelectedListener(this);
-
-        mHeaderBinding = DataBindingUtil.bind(navigationView.getHeaderView(0));
-        mHeaderBinding.setLogIn(mLogIn);
-        mHeaderBinding.logInButton.setOnClickListener(
+        // Set the state of the NavHeader log in/out button
+        mNavHeaderBinding.setLogIn(mLogInVm);
+        mNavHeaderBinding.logInButton.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        if (hasToken()) {
-                            mToken = null;
-                            mPreferences.edit().putString(AUTH_TOKEN, mToken).apply();
-                            mHeaderBinding.setAccount(null);
-                            mLogIn.setLoggedIn(hasToken());
-                            Toast.makeText(MainActivity.this, "Successfully logged out", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Auth.startOAuth2Authentication(MainActivity.this, getString(R.string.app_key));
-                        }
+                        onLogInButtonClicked();
                     }
                 }
         );
     }
 
+    private void onLogInButtonClicked() {
+        if (hasToken()) { // Log out
+
+            // Update observables
+            mObservableToken.set(null);
+            mNavHeaderBinding.setAccount(null);
+            mLogInVm.setLoggedIn(hasToken());
+
+            mPreferences.edit().putString(AUTH_TOKEN, mObservableToken.get()).apply();
+            Toast.makeText(MainActivity.this, R.string.log_out_success, Toast.LENGTH_SHORT).show();
+        } else { // Request Log in
+            Auth.startOAuth2Authentication(MainActivity.this, getString(R.string.app_key));
+        }
+    }
+
     private boolean hasToken() {
-        return mToken != null;
+        return mObservableToken.get() != null;
     }
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
@@ -170,7 +194,7 @@ public class MainActivity extends AppCompatActivity
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @OnNeverAskAgain(Manifest.permission.READ_EXTERNAL_STORAGE)
     void onNeverAskAgain() {
-        showPermissionSnackbar();
+        showAppSettingsSnackbar();
     }
 
     private void showPermissionRationaleDialog(final PermissionRequest request) {
@@ -191,29 +215,37 @@ public class MainActivity extends AppCompatActivity
                 .show();
     }
 
-    private void showPermissionSnackbar() {
+    private void showAuthSnackbar() {
+        Snackbar.make(mBinding.getRoot(), R.string.dropbox_log_in, Snackbar.LENGTH_LONG)
+                .setAction(android.R.string.ok, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Auth.startOAuth2Authentication(MainActivity.this, getString(R.string.app_key));
+                    }
+                }).show();
+    }
+
+    private void showAppSettingsSnackbar() {
         final Snackbar snackbar = Snackbar.make(
                 mBinding.appBarMain.fab,
                 R.string.storage_permission_rationale,
                 Snackbar.LENGTH_INDEFINITE
         );
 
-        snackbar.setAction(
-                getString(android.R.string.ok),
-                new View.OnClickListener() {
+        snackbar.setAction(getString(android.R.string.ok), new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Uri uri = Uri.fromParts(
-                                SCHEME_PACKAGE,
-                                getApplicationContext().getPackageName(),
-                                null
-                        );
-                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri);
-                        startActivity(intent);
+                        requestAppSettings();
                         snackbar.dismiss();
                     }
                 }
         ).show();
+    }
+
+    private void requestAppSettings() {
+        Uri uri = Uri.fromParts(SCHEME_PACKAGE, getApplicationContext().getPackageName(), null);
+        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, uri);
+        startActivity(intent);
     }
 
     @Override
@@ -292,7 +324,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void getAccountInfo() {
-        new AccountInfoTask(DropboxClientFactory.getClient(), new AccountInfoTask.Callback() {
+        if (!hasToken()) return;
+        new AccountInfoTask(mDbxClient, new AccountInfoTask.Callback() {
             @Override
             public void onComplete(FullAccount result) {
                 if (mAccountVm == null) {
@@ -301,33 +334,31 @@ public class MainActivity extends AppCompatActivity
                     mAccountVm.setAccount(result);
                 }
 
-                // Only need to set if we removed the reference
-                if (mHeaderBinding.getAccount() == null) {
-                    mHeaderBinding.setAccount(mAccountVm);
+                // Only need to set if we removed the reference during logout
+                if (mNavHeaderBinding.getAccount() == null) {
+                    mNavHeaderBinding.setAccount(mAccountVm);
                 }
             }
 
             @Override
             public void onError(Exception e) {
-
+                Log.e(MainActivity.this.getClass().getSimpleName(), getString(R.string.user_account_error), e);
+                Toast.makeText(MainActivity.this, R.string.error_message, Toast.LENGTH_SHORT).show();
             }
         }).execute();
     }
 
     private void uploadPicture(Uri fileUri) {
+        if (!hasToken()) return;
+
         final ProgressDialog dialog = createUploadProgressDialog();
         dialog.show();
 
-        new UploadTask(this, DropboxClientFactory.getClient(), new UploadTask.UploadCallback() {
+        new UploadTask(this, mDbxClient, new UploadTask.Callback() {
             @Override
             public void onSuccess(FileMetadata metadata) {
                 dialog.dismiss();
-
-                String message = metadata.getName() + " size " + metadata.getSize() + " modified " +
-                        DateFormat.getDateTimeInstance().format(metadata.getClientModified());
-                Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
-
-                // Reload the folder
+                Toast.makeText(MainActivity.this, R.string.upload_success, Toast.LENGTH_SHORT).show();
             }
 
             @Override

@@ -23,10 +23,10 @@ public class UploadTask extends AsyncTask<String , Void, FileMetadata> {
 
     private final Context mContext;
     private final DbxClientV2 mDbxClient;
-    private final UploadCallback mCallback;
+    private final Callback mCallback;
     private Exception mException;
 
-    public UploadTask(Context context, DbxClientV2 dbxClient, UploadCallback callback) {
+    public UploadTask(Context context, DbxClientV2 dbxClient, Callback callback) {
         mContext = context;
         mDbxClient = dbxClient;
         mCallback = callback;
@@ -66,7 +66,7 @@ public class UploadTask extends AsyncTask<String , Void, FileMetadata> {
         return null;
     }
 
-    public interface UploadCallback {
+    public interface Callback {
         void onSuccess(FileMetadata metadata);
 
         void onFailure(Exception e);

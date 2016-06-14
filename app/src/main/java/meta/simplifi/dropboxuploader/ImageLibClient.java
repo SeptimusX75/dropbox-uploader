@@ -16,7 +16,7 @@ public class ImageLibClient {
     public static void init(Context context, DbxClientV2 dbxClient) {
         sPicasso = new Picasso.Builder(context)
                 .downloader(new OkHttpDownloader(context))
-                .addRequestHandler(null)
+                .addRequestHandler(new FileThumbnailRequestHandler(dbxClient))
                 .build();
     }
 

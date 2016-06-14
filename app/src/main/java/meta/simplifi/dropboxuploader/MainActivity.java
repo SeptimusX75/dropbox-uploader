@@ -78,6 +78,7 @@ public class MainActivity extends AppCompatActivity
         mPreferences = getSharedPreferences(AUTH_TOKEN, MODE_PRIVATE);
         verifyAuth();
         mLogIn.setLoggedIn(hasToken());
+
     }
 
     private void verifyAuth() {
@@ -89,10 +90,12 @@ public class MainActivity extends AppCompatActivity
                 mPreferences.edit().putString(AUTH_TOKEN, mToken).apply();
                 DropboxClientFactory.setDbxClient(mToken);
                 getAccountInfo();
+                ImageLibClient.init(MainActivity.this, DropboxClientFactory.getClient());
             }
         } else {
             DropboxClientFactory.setDbxClient(mToken);
             getAccountInfo();
+            ImageLibClient.init(MainActivity.this, DropboxClientFactory.getClient());
         }
     }
 
@@ -253,6 +256,7 @@ public class MainActivity extends AppCompatActivity
 
         switch (id) {
             case R.id.nav_uploads:
+                startActivity(new Intent(this, UploadedFilesActivity.class));
                 break;
         }
 

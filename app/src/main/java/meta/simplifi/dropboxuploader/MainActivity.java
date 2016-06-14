@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity
     private SharedPreferences mPreferences;
 
     private ObservableField<String> mObservableToken = new ObservableField<>();
-    private LoginViewModel mLogInVm = new LoginViewModel();
+    private NavLoginViewModel mLogInVm = new NavLoginViewModel();
 
     //region Callbacks
     private View.OnClickListener mFabClickListener = new View.OnClickListener() {

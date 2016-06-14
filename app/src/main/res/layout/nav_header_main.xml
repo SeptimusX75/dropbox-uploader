@@ -13,7 +13,7 @@
 
         <variable
             name="login"
-            type="meta.simplifi.dropboxuploader.LoginViewModel"/>
+            type="meta.simplifi.dropboxuploader.NavLoginViewModel"/>
 
     </data>
 

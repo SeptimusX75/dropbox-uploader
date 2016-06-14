@@ -9,7 +9,7 @@ import meta.simplifi.core.viewmodel.BaseViewModel;
 /**
  * Created by SeptimusX75 (msilva28.dev@gmail.com) on 6/13/2016.
  */
-public class LoginViewModel extends BaseViewModel {
+public class NavLoginViewModel extends BaseViewModel {
 
     private boolean mLoggedIn;
 

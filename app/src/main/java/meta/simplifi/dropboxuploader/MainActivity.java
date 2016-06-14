@@ -288,7 +288,11 @@ public class MainActivity extends AppCompatActivity
 
         switch (id) {
             case R.id.nav_uploads:
-                startActivity(new Intent(this, UploadedFilesActivity.class));
+                if (hasToken()) {
+                    startActivity(new Intent(this, UploadedFilesActivity.class));
+                } else {
+                    showAuthSnackbar();
+                }
                 break;
         }
 

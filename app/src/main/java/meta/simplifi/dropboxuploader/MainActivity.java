@@ -216,7 +216,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void showAuthSnackbar() {
-        Snackbar.make(mBinding.getRoot(), R.string.dropbox_log_in, Snackbar.LENGTH_LONG)
+        Snackbar.make(mBinding.appBarMain.fab, R.string.dropbox_log_in, Snackbar.LENGTH_INDEFINITE)
                 .setAction(android.R.string.ok, new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {

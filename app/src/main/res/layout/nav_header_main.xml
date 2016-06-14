@@ -95,6 +95,16 @@
             android:visibility="@{login.dropboxLogoVisibility}"
             tools:visibility="gone"/>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:padding="16dp"
+            android:text="Uploader"
+            android:textColor="@android:color/white"
+            android:visibility="@{login.dropboxLogoVisibility}"
+            tools:visibility="gone"/>
+
     </FrameLayout>
 
 </layout>

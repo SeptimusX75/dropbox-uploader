@@ -9,7 +9,7 @@ import meta.simplifi.core.viewmodel.BaseViewModel;
 /**
  * Created by SeptimusX75 (msilva28.dev@gmail.com) on 6/13/2016.
  */
-public class LogInViewModel extends BaseViewModel {
+public class LoginViewModel extends BaseViewModel {
 
     private boolean mLoggedIn;
 
@@ -41,6 +41,6 @@ public class LogInViewModel extends BaseViewModel {
 
     @Override
     public int getVariableId() {
-        return BR.logIn;
+        return BR.login;
     }
 }

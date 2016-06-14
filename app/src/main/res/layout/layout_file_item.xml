@@ -29,7 +29,7 @@
             android:layout_gravity="center_vertical"
             android:contentDescription="icon"
             android:scaleType="centerCrop"
-            bind:dbxUri="@{fileItem.fileUri}"/>
+            bind:dbxUri="@{fileItem.fileThumbnailUri}"/>
 
         <TextView
             android:id="@+id/text"

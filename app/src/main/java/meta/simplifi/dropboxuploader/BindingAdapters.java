@@ -14,8 +14,6 @@ public class BindingAdapters {
     @BindingAdapter("android:src")
     public static void setSrc(ImageView imageView, String src) {
         Picasso.with(imageView.getContext()).load(src).fit()
-                .placeholder(android.R.drawable.ic_menu_gallery)
-                .error(android.R.drawable.ic_menu_gallery)
                 .centerInside().into(imageView);
     }
 
@@ -29,8 +27,6 @@ public class BindingAdapters {
     @BindingAdapter("android:src")
     public static void setSrc(ImageView imageView, int src) {
         Picasso.with(imageView.getContext()).load(src).fit()
-                .placeholder(android.R.drawable.ic_menu_gallery)
-                .error(android.R.drawable.ic_menu_gallery)
                 .centerInside().into(imageView);
     }
 }

@@ -7,7 +7,8 @@ import com.squareup.picasso.OkHttpDownloader;
 import com.squareup.picasso.Picasso;
 
 /**
- * Created by SeptimusX75 (msilva28.dev@gmail.com) on 6/13/2016.
+ * Borrowed from https://github.com/dropbox/dropbox-sdk-java
+ * Specifically for downloading thumbnails of uploaded pictures after the fact
  */
 public class ImageLibClient {
 

@@ -16,7 +16,7 @@ import android.support.annotation.AnyRes;
 import java.io.File;
 
 /**
- * Taken from dropbox sample
+ * Borrowed from https://github.com/dropbox/dropbox-sdk-java
  */
 public class UriUtil {
 

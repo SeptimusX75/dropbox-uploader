@@ -17,9 +17,9 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Created by SeptimusX75 (msilva28.dev@gmail.com) on 6/13/2016.
+ * Borrowed from https://github.com/dropbox/dropbox-sdk-java
  */
-public class UploadTask extends AsyncTask<String , Void, FileMetadata> {
+public class UploadTask extends AsyncTask<String, Void, FileMetadata> {
 
     private final Context mContext;
     private final DbxClientV2 mDbxClient;

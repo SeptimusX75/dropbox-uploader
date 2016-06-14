@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity
     private SharedPreferences mPreferences;
 
     private ObservableField<String> mObservableToken = new ObservableField<>();
-    private LogInViewModel mLogInVm = new LogInViewModel();
+    private LoginViewModel mLogInVm = new LoginViewModel();
 
     //region Callbacks
     private View.OnClickListener mFabClickListener = new View.OnClickListener() {
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity
         drawerToggle.syncState();
 
         // Set the state of the NavHeader log in/out button
-        mNavHeaderBinding.setLogIn(mLogInVm);
+        mNavHeaderBinding.setLogin(mLogInVm);
         mNavHeaderBinding.logInButton.setOnClickListener(
                 new View.OnClickListener() {
                     @Override

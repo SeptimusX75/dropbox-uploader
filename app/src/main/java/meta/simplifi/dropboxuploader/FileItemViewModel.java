@@ -10,6 +10,7 @@ import meta.simplifi.core.viewmodel.BaseViewModel;
 
 /**
  * Created by SeptimusX75 (msilva28.dev@gmail.com) on 6/13/2016.
+ * Controls display elements for file row items
  */
 public class FileItemViewModel extends BaseViewModel {
 
@@ -34,14 +35,17 @@ public class FileItemViewModel extends BaseViewModel {
     }
 
     @Bindable
-    public Uri getFileUri() {
+    public Uri getFileThumbnailUri() {
         MimeTypeMap typeMap = MimeTypeMap.getSingleton();
         String extension = mFileMetadata.getName().substring(mFileMetadata.getName().indexOf(".") + 1);
         String type = typeMap.getMimeTypeFromExtension(extension);
 
-        if (type != null && type.startsWith("image/"))
+        // Check if the file is an image or not
+        if (type == null || !type.startsWith("image/")) {
+            return Uri.parse("");
+        } else {
             return FileThumbnailRequestHandler.buildPicassoUri(mFileMetadata);
-        else return Uri.parse("");
+        }
     }
 
     @Override

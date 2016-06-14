@@ -8,6 +8,7 @@ import meta.simplifi.core.viewmodel.BaseViewModel;
 
 /**
  * Created by SeptimusX75 (msilva28.dev@gmail.com) on 6/13/2016.
+ * Displays the characteristics of the Account information in the App drawer menu
  */
 public class FullAccountViewModel extends BaseViewModel {
     private FullAccount mAccount;
@@ -40,6 +41,7 @@ public class FullAccountViewModel extends BaseViewModel {
     public String getPhotoUrl() {
         String url = mAccount.getProfilePhotoUrl();
         if (url == null) {
+            // Show default android icon if no image present
             return UriUtil.getPathToResource(android.R.drawable.sym_def_app_icon);
         }
         return url;

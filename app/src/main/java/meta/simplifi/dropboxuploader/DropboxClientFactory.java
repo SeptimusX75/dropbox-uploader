@@ -5,7 +5,7 @@ import com.dropbox.core.http.OkHttp3Requestor;
 import com.dropbox.core.v2.DbxClientV2;
 
 /**
- * Created by SeptimusX75 (msilva28.dev@gmail.com) on 6/13/2016.
+ * Borrowed from https://github.com/dropbox/dropbox-sdk-java
  */
 public class DropboxClientFactory {
     private static DbxClientV2 sDbxClient;

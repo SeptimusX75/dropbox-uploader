@@ -1,12 +1,9 @@
 package meta.simplifi.dropboxuploader;
 
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 
 import com.dropbox.core.android.Auth;
 import com.dropbox.core.v2.DbxClientV2;
@@ -20,7 +17,7 @@ import meta.simplifi.core.adapter.BindingRecyclerAdapter;
 import meta.simplifi.core.fragment.BindingRecyclerFragment;
 
 /**
- * A placeholder fragment containing a simple view.
+ * A fragment displaying recently uploaded files.
  */
 public class UploadedFilesFragment extends BindingRecyclerFragment<BindingRecyclerAdapter<FileItemViewModel>> {
 
@@ -57,8 +54,8 @@ public class UploadedFilesFragment extends BindingRecyclerFragment<BindingRecycl
 
     @NonNull
     @Override
-    protected BindingRecyclerAdapter createBindingAdapter() {
-        return new BindingRecyclerAdapter();
+    protected BindingRecyclerAdapter<FileItemViewModel> createBindingAdapter() {
+        return new BindingRecyclerAdapter<>();
     }
 
     @Override

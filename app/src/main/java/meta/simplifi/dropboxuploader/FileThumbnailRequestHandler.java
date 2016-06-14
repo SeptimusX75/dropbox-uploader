@@ -15,8 +15,8 @@ import com.squareup.picasso.RequestHandler;
 import java.io.IOException;
 
 /**
- * Example Picasso request handler that gets the thumbnail url for a dropbox path
- * Only handles urls like dropbox://dropbox/[path_to_file]
+ * Borrowed from https://github.com/dropbox/dropbox-sdk-java
+ * For loading thumbnails of files after they've been uploaded
  */
 public class FileThumbnailRequestHandler extends RequestHandler {
 
